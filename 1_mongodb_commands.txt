@@ -1,0 +1,130 @@
+MongoDB Shell Commands Guide
+
+1. Show Databases
+Command: show dbs
+
+2. Switch Database
+Command: use <dbName>
+Example: use myDatabase
+Description: Switches to the specified database. Creates it if it doesn't exist when data is inserted.
+
+3. Show Current Database
+Command: db
+Description: Displays the name of the currently selected database.
+
+4. Show Collections
+Command: show collections
+Description: Lists all collections inside the current database.
+
+
+====================================Find======================
+
+5. Fetch All Records
+Command: db.<collection>.find()
+Example: db.users.find()
+Description: Retrieves all documents from a collection.
+
+7. Fetch One Record
+Command: db.<collection>.findOne()
+Description: Returns the first document from the collection.
+
+8. Fetch with Condition
+Command: db.<collection>.find({ field: value })
+Example: db.users.find({ age: 25 })
+Description: Retrieves documents matching the condition.
+
+
+db.users.find({age:26 },{name:1, age:1})
+db.users.find({age:{$gt:27 }},{name:1, age:1})
+
+
+9. Limit Records
+Command: db.<collection>.find().limit(n)
+Example: db.users.find().limit(5)
+Description: Limits the number of returned documents.
+
+====================================Insert======================
+
+10. Insert Record
+Command: db.<collection>.insertOne({ ... })
+Description: Inserts a single document into a collection.
+
+11. Insert Multiple Records
+Command: db.<collection>.insertMany([{ ... }, { ... }])
+Description: Inserts multiple documents.
+
+
+====================================Delete=================
+
+
+Delete -------------------------
+13. Delete Record
+Command: db.<collection>.deleteOne(filter)
+Description: Deletes one document matching the filter.
+
+db.users.deleteOne({ name: "John" })
+
+
+14. Delete Multiple Records
+Command: db.<collection>.deleteMany(filter)
+Description: Deletes multiple matching documents.
+
+	db.users.deleteMany({ age: { $gte: 30 } })
+	deleteMany({}) -> clear collection
+
+	// Delete all users (TRUNCATE equivalent)
+
+
+15. Count Documents
+Command: db.<collection>.countDocuments()
+Description: Returns the number of documents in a collection.
+
+16. Drop Collection
+Command: db.<collection>.drop()
+Description: Deletes a collection entirely.
+
+17. Drop Database
+Command: db.dropDatabase()
+Description: Deletes the current database.
+
+---
+==================================Update=====
+
+Update : 
+
+partially update
+	db.collection.updateOne(filter, update)
+	db.collection.updateMany(filter, update)
+	
+	db.users.updateOne(
+	  { name: "dhone" },         // filter
+	  { $set: { name: 'dhoni' } }    // update
+	)
+	
+
+replaceOne is FULL update (replaces entire document)
+	
+	
+	once updated getting below resopone
+	{
+	  acknowledged: true,
+	  insertedId: null,
+	  matchedCount: 1,
+	  modifiedCount: 1,
+	  upsertedCount: 0
+	}
+	
+	
+Operators for update
+		{ $set: { country: "India" } }
+		{ $inc: { age: 1 } }
+
+====================
+
+instert, if not exist
+
+db.users.updateOne(
+  { name: "virat" },
+  { $set: { age: 28 } },
+  { upsert: true }
+)		

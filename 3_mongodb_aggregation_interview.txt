@@ -1,0 +1,211 @@
+MongoDB Aggregation Interview Questions & Answers
+
+--------------------------------------------------
+
+1. Question: Get total revenue for completed orders
+
+db.orders.aggregate([
+  { $match: { status: "completed" } },
+  {
+    $group: {
+      _id: null,
+      totalRevenue: { $sum: "$amount" }
+    }
+  }
+])
+
+--------------------------------------------------
+
+2. Question: Find total amount spent by each user
+
+db.orders.aggregate([
+  {
+    $group: {
+      _id: "$user",
+      totalSpent: { $sum: "$amount" }
+    }
+  }
+])
+
+--------------------------------------------------
+
+3. Question: Get top 3 users based on spending
+
+Answer:
+db.orders.aggregate([
+  {
+    $group: {
+      _id: "$user",
+      totalSpent: { $sum: "$amount" }
+    }
+  },
+  { $sort: { totalSpent: -1 } },
+  { $limit: 3 }
+])
+
+--------------------------------------------------
+
+4. Question: Find total number of orders per city
+
+Answer:
+db.orders.aggregate([
+  {
+    $group: {
+      _id: "$city",
+      totalOrders: { $sum: 1 }
+    }
+  }
+])
+
+--------------------------------------------------
+
+5. Question: Show only user and amount fields
+
+Answer:
+db.orders.aggregate([
+  {
+    $project: {
+      _id: 0,
+      user: 1,
+      amount: 1
+    }
+  }
+])
+
+--------------------------------------------------
+
+6. Question: Get all orders above 150
+
+Answer:
+db.orders.aggregate([
+  { $match: { amount: { $gt: 150 } } }
+])
+
+--------------------------------------------------
+
+7. Question: fetch 3rd and 4th highest amount (skip 2, limit 2)
+
+Answer:
+db.orders.aggregate([
+  { $sort: { amount: -1 } },
+  { $skip: 2 },
+  { $limit: 2 }
+])
+
+--------------------------------------------------
+
+8. Question: Find average order value per user
+
+Answer:
+db.orders.aggregate([
+  {
+    $group: {
+      _id: "$user",
+      avgAmount: { $avg: "$amount" }
+    }
+  }
+])
+
+--------------------------------------------------
+
+9. Question: Count completed orders
+
+Answer:
+db.orders.aggregate([
+  { $match: { status: "completed" } },
+  {
+    $group: {
+      _id: null,
+      count: { $sum: 1 }
+    }
+  }
+])
+
+--------------------------------------------------
+
+10. Question: Rename user field to customerName
+
+Answer:
+db.orders.aggregate([
+  {
+    $project: {
+      _id: 0,
+      customerName: "$user",
+      amount: 1
+    }
+  }
+])
+
+--------------------------------------------------
+
+11. Question: Get total completed amount per user
+
+Answer:
+db.orders.aggregate([
+  { $match: { status: "completed" } },
+  {
+    $group: {
+      _id: "$user",
+      total: { $sum: "$amount" }
+    }
+  },
+  { $project: { user: "$_id", total: 1, _id: 0 } }
+])
+
+--------------------------------------------------
+
+12. Question: Find minimum order per user
+
+Answer:
+db.orders.aggregate([
+  {
+    $group: {
+      _id: "$user",
+      minOrder: { $min: "$amount" }
+    }
+  }
+])
+
+--------------------------------------------------
+
+🔥 Q1. Difference: find() vs aggregate()
+	Answer:
+
+	find() → simple queries
+	aggregate() → transformation, grouping, joins
+
+
+🔥 Q2. Why is aggregation slow sometimes?
+	Answer:
+
+	No index on $match
+	Large dataset before filtering
+	$lookup on large collections
+
+	✅ Fix:
+
+	Move $match first
+	Add indexes
+	Optimize pipeline
+	
+🔥 Q3. How to optimize $lookup?
+	✅ Answer:
+
+	Use indexed fields
+	Reduce fields with $project
+	Avoid large array joins	
+
+
+🔥 Q4. Count users with more than 5 orders
+
+	db.orders.aggregate([
+	  {
+		$group: {
+		  _id: "$userId",
+		  totalOrders: { $sum: 1 }
+		}
+	  },
+	  { $match: { totalOrders: { $gt: 5 } } },
+	  { $count: "users" }
+	])
+-------------------------------------------------

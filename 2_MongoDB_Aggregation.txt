@@ -1,0 +1,179 @@
+insert records
+
+db.orders.insertMany([  { _id: 1, user: "A", amount: 100, status: "completed", city: "Pune" },  { _id: 2, user: "B", amount: 200, status: "pending", city: "Mumbai" },  { _id: 3, user: "A", amount: 150, status: "completed", city: "Pune" },  { _id: 4, user: "C", amount: 300, status: "completed", city: "Delhi" }])
+
+----------------------------
+
+
+These stages are core pipeline building blocks:
+
+	$match → filtering
+	$project → shaping data
+	$group → aggregating
+	$skip, $limit → pagination
+
+
+🔹 2.1 $match — Filtering Stage
+
+	✅ Why it is important
+
+		Reduces number of documents early
+		Improves performance
+		Should be placed as early as possible
+		
+	✅ How it works internally
+		MongoDB:
+
+		Reads documents
+		Applies condition
+		Passes only matched docs to next stage
+
+
+	db.orders.aggregate([{$match : {status : 'completed'}}])
+	
+	db.orders.aggregate([ {$match : {status : 'completed'}}, {$project :{user:1}} ])
+	
+=================
+	
+🔹 2.2 $group — Aggregation Stage
+	✅ What it is
+		$group is used to:
+
+		Group documents
+		Perform aggregation calculations
+
+		👉 Similar to SQL GROUP BY
+		👉 It merges multiple documents into one per group	
+	
+	✅ Key concept
+		Every group requires:
+
+		_id → grouping key
+		
+		aggregation operators like:
+
+		$sum
+		$avg
+		$max
+		$min
+		$count (via $sum: 1)
+
+
+
+		db.orders.aggregate([
+			{
+				$group : {_id : "$user", totalSpent : {$sum:"$amount"}}
+			}
+		])
+		
+		
+		city wise orders and total amount
+		
+		db.orders.aggregate([
+			{
+				$group: {
+					_id: '$city',
+					avgSpent:{$sum : "$amount"},
+					totalOrders: {$sum : 1}
+				}
+			}
+		
+		
+		
+		o/ p 
+			  { _id: 'Delhi', avgSpent: 300, totalOrders: 1 },
+			  { _id: 'Pune', avgSpent: 250, totalOrders: 2 },
+			  { _id: 'Mumbai', avgSpent: 200, totalOrders: 1 }
+
+
+------------------
+
+
+🔹 2.3 $project — Reshaping Stage
+	✅ What it is
+		$project is used to:
+
+			Add new computed fields
+			Rename fields
+
+			1 → include field
+			0 → exclude field
+			Can create new fields using expressions
+
+
+	👉 Equivalent to SQL SELECT
+
+
+	db.orders.aggregate([
+	  {
+		$project: {
+		  user: 1,
+		  amount: 1,
+		  discounted: { $multiply: ["$amount", 0.9] }
+		}
+	  }
+	])
+
+
+----------
+
+🔹 2.4 $sort — Sorting Stage
+	✅ What it is
+		Sorts documents.
+		👉 Like SQL ORDER BY
+
+	✅ Values
+
+		1 → ascending
+		-1 → descending
+
+
+		db.orders.aggregate([
+		  { $sort: { amount: -1 } }
+		])
+
+✅ Important Insight
+
+	Sorting is expensive operation
+	Use it after filtering/grouping if possible
+
+======================================================
+
+🔹 2.5 $limit and $skip — Pagination
+
+	✅ $limit
+		Limits number of documents
+
+	{ $limit: 2 }
+	
+	
+	✅ $skip
+		Skips documents
+
+	{ $skip: 2 }
+	
+Pagination	
+
+	db.orders.aggregate([
+	  { $sort: { amount: -1 } },
+	  { $skip: 1 },
+	  { $limit: 2 }
+	])
+	
+
+=======================================
+
+
+
+🔥 Q2. Why is aggregation slow sometimes?
+	Answer:
+
+	No index on $match
+	Large dataset before filtering
+	$lookup on large collections
+
+✅ Fix:
+
+	Move $match first
+	Add indexes
+	Optimize pipeline

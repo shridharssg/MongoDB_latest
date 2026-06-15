@@ -1,0 +1,313 @@
+MongoDB JOINS ($lookup) - collection mentioed at the end
+
+==================================================
+
+1. Question: What is JOIN in MongoDB?
+
+Answer:
+MongoDB does not have traditional SQL JOIN. Instead, it provides $lookup which is used to join data between collections in aggregation pipeline.
+
+==================================================
+
+2. Question: Difference between SQL JOIN and MongoDB JOIN
+
+Answer:
+SQL JOIN -> MongoDB equivalent
+INNER JOIN -> $lookup + $unwind
+LEFT JOIN  -> $lookup
+Multiple JOIN -> multiple $lookup
+
+==================================================
+
+3. Question: Basic $lookup (LEFT JOIN) example
+
+Answer:
+db.ordercols.aggregate([
+  {
+    $lookup: {
+      from: "usercols",
+      localField: "userId",
+      foreignField: "_id",
+      as: "userDetails"
+    }
+  }
+])
+
+Note:
+- Adds matching documents as array
+- Works like LEFT JOIN
+
+
+o/ p like: 
+
+
+[
+  {
+    _id: 1,
+    userId: 'U1',
+    productId: 'P1',
+    amount: 50000,
+    status: 'completed',
+    city: 'Pune',
+    userDetails: [ { _id: 'U1', name: 'Shridhar', status: 'active', city: 'Pune' } ]
+  }
+ ]
+
+==================================================
+
+4. Question: Why does $lookup return array?
+
+Answer:
+Because there can be multiple matching documents. Even if only one match exists, result is always returned as an array.
+
+==================================================
+
+5. Question: How to convert LEFT JOIN into INNER JOIN?
+
+Answer:
+Use $unwind after $lookup
+
+db.ordercols.aggregate([
+  {
+    $lookup: {
+      from: "usercols",
+      localField: "userId",
+      foreignField: "_id",
+      as: "userDetails"
+    }
+  },
+  { $unwind: "$userDetails" }
+])
+
+
+o/p  like
+
+[
+  {
+    _id: 1,
+    userId: 'U1',
+    productId: 'P1',
+    amount: 50000,
+    status: 'completed',
+    city: 'Pune',
+    userDetails: { _id: 'U1', name: 'Shridhar', status: 'active', city: 'Pune' }
+  }
+] 
+
+==================================================
+
+6. Question: Get orders with user name
+
+Answer:
+db.ordercols.aggregate([
+  {
+    $lookup: {
+      from: "usercols",
+      localField: "userId",
+      foreignField: "_id",
+      as: "user"
+    }
+  },
+  { $unwind: "$user" },
+  {
+    $project: {
+      _id: 0,
+      amount: 1,
+      userName: "$user.name"
+    }
+  }
+])
+
+
+o/p : 
+[
+  { amount: 50000, userName: 'Shridhar' },
+  { amount: 20000, userName: 'Amit' },
+  { amount: 2000, userName: 'Shridhar' },
+  { amount: 20000, userName: 'Rahul' }
+]
+
+==================================================
+
+7. Question: What is advanced $lookup using pipeline?
+
+Answer:
+Used when simple join conditions are not sufficient.
+
+Example:
+db.ordercols.aggregate([
+  {
+    $lookup: {
+      from: "usercols",
+      let: { userId: "$userId" },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $and: [
+                { $eq: ["$_id", "$$userId"] },
+                { $eq: ["$status", "active"] }
+              ]
+            }
+          }
+        }
+      ],
+      as: "user"
+    }
+  }
+])
+
+==================================================
+
+8. Question: Multiple JOIN example
+
+Answer:
+db.ordercols.aggregate([
+  {
+    $lookup: {
+      from: "usercols",
+      localField: "userId",
+      foreignField: "_id",
+      as: "user"
+    }
+  },
+  {
+    $lookup: {
+      from: "productcols",
+      localField: "productId",
+      foreignField: "_id",
+      as: "product"
+    }
+  }
+])
+
+
+
+o/p like : 
+
+
+[
+  {
+    _id: 1,
+    userId: 'U1',
+    productId: 'P1',
+    amount: 50000,
+    status: 'completed',
+    city: 'Pune',
+    user: [ { _id: 'U1', name: 'Shridhar', status: 'active', city: 'Pune' } ],
+    product: [ { _id: 'P1', name: 'Laptop', price: 50000 } ]
+  }
+] 
+==================================================
+
+9. Question: Why is $lookup slow?
+
+Answer:
+- Large data size
+- No indexing
+- Joining multiple collections
+
+==================================================
+
+10. Question: How to optimize $lookup?
+
+Answer:
+- Use indexes on foreignField
+- Apply $match before $lookup
+- Reduce unnecessary fields using $project
+
+==================================================
+
+11. Question: Real-world example (E-commerce JOIN)
+
+Answer:
+db.ordercols.aggregate([
+  { $match: { status: "completed" } },
+  {
+    $lookup: {
+      from: "usercols",
+      localField: "userId",
+      foreignField: "_id",
+      as: "user"
+    }
+  },
+  { $unwind: "$user" },
+  {
+    $lookup: {
+      from: "productcols",
+      localField: "productId",
+      foreignField: "_id",
+      as: "product"
+    }
+  },
+  { $unwind: "$product" },
+  {
+    $project: {
+      orderId: "$_id",
+      userName: "$user.name",
+      productName: "$product.name",
+      amount: 1
+    }
+  }
+])
+
+==================================================
+
+END OF DOCUMENT
+
+
+collection for above 
+
+
+
+db.usercols.insertMany([
+  { _id: "U1", name: "Shridhar", status: "active", city: "Pune" },
+  { _id: "U2", name: "Amit", status: "inactive", city: "Mumbai" },
+  { _id: "U3", name: "Rahul", status: "active", city: "Delhi" }
+])
+
+
+
+
+db.productcols.insertMany([
+  { _id: "P1", name: "Laptop", price: 50000 },
+  { _id: "P2", name: "Mobile", price: 20000 },
+  { _id: "P3", name: "Headphones", price: 2000 }
+])
+
+
+
+db.ordercols.insertMany([
+  {
+    _id: 1,
+    userId: "U1",
+    productId: "P1",
+    amount: 50000,
+    status: "completed",
+    city: "Pune"
+  },
+  {
+    _id: 2,
+    userId: "U2",
+    productId: "P2",
+    amount: 20000,
+    status: "pending",
+    city: "Mumbai"
+  },
+  {
+    _id: 3,
+    userId: "U1",
+    productId: "P3",
+    amount: 2000,
+    status: "completed",
+    city: "Pune"
+  },
+  {
+    _id: 4,
+    userId: "U3",
+    productId: "P2",
+    amount: 20000,
+    status: "completed",
+    city: "Delhi"
+  }
+])

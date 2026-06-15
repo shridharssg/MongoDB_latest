@@ -1,0 +1,237 @@
+MongoDB INDEXING - INTERVIEW NOTES
+======================================
+
+✅ 1. What is Indexing?
+
+Index is a data structure that improves query performance.
+
+👉 Without index:
+- Full collection scan (slow) ❌
+
+👉 With index:
+- Direct lookup (fast) ✅
+
+Example:
+db.users.createIndex({ email: 1 })
+
+
+======================================
+
+✅ 2. Why Indexing is Needed?
+
+✔ Faster queries
+✔ Efficient filtering
+✔ Better sorting
+✔ Improves aggregation performance
+
+❌ Without index:
+- Slow queries
+- High CPU usage
+
+
+======================================
+
+✅ 3. Basic Index Syntax
+
+db.collection.createIndex({ field: 1 })
+
+👉 1  = ascending
+👉 -1 = descending
+
+
+======================================
+
+✅ 4. Types of Indexes
+
+--------------------------------------
+
+✅ 4.1 Single Field Index
+
+db.users.createIndex({ email: 1 })
+
+✔ Used for single field queries
+
+
+--------------------------------------
+
+✅ 4.2 Compound Index
+
+db.orders.createIndex({ userId: 1, status: 1 })
+
+🔥 IMPORTANT RULE:
+Order matters!
+
+✅ Works for:
+- userId ✅
+- userId + status ✅
+
+❌ Not work efficiently for:
+- status alone ❌
+
+
+--------------------------------------
+
+✅ 4.3 Unique Index
+
+db.users.createIndex({ email: 1 }, { unique: true })
+
+✔ Prevents duplicate values
+
+
+--------------------------------------
+
+✅ 4.4 Text Index
+
+db.products.createIndex({ name: "text" })
+
+Query:
+db.products.find({ $text: { $search: "laptop" } })
+
+
+--------------------------------------
+
+✅ 4.5 TTL Index (Auto Delete)
+
+db.logs.createIndex(
+ { createdAt: 1 },
+ { expireAfterSeconds: 3600 }
+)
+
+✔ Used for:
+- logs
+- OTP
+- sessions
+
+
+--------------------------------------
+
+✅ 4.6 Sparse Index
+
+db.users.createIndex({ phone: 1 }, { sparse: true })
+
+✔ Index only documents having field
+
+
+--------------------------------------
+
+✅ 4.7 Partial Index
+
+db.orders.createIndex(
+ { status: 1 },
+ { partialFilterExpression: { status: "completed" } }
+)
+
+✔ Index only specific condition
+
+
+======================================
+
+✅ 5. Index in Aggregation
+
+🔥 RULE:
+Always use $match first
+
+Example:
+db.orders.aggregate([
+  { $match: { status: "completed" } }
+])
+
+✔ Helps MongoDB use index
+
+
+======================================
+
+✅ 6. Check Index Usage
+
+db.orders.find({ status: "completed" }).explain("executionStats")
+
+✅ IXSCAN → index used ✅
+❌ COLLSCAN → full scan ❌
+
+
+======================================
+
+✅ 7. Drop Index
+
+db.collection.dropIndex({ field: 1 })
+
+
+======================================
+
+✅ 8. Real Example (API Optimization)
+
+Query:
+GET /orders?userId=U1&status=completed
+
+✅ Best Index:
+db.orders.createIndex({ userId: 1, status: 1 })
+
+
+======================================
+
+✅ 9. Best Practices
+
+✅ DO:
+✔ Index frequently used fields
+✔ Use compound indexes
+✔ Use $match first
+✔ Monitor performance
+
+❌ DON'T:
+✖ Too many indexes
+✖ Index unused fields
+
+
+======================================
+
+✅ 10. Interview Questions
+
+--------------------------------------
+
+🔥 Q1: What is index?
+✅ Improves query performance
+
+--------------------------------------
+
+🔥 Q2: What is COLLSCAN?
+❌ Full collection scan (slow)
+
+--------------------------------------
+
+🔥 Q3: What is compound index?
+✅ Index on multiple fields
+
+--------------------------------------
+
+🔥 Q4: Why index order matters?
+✅ MongoDB uses prefix rule
+
+--------------------------------------
+
+🔥 Q5: What is covered query?
+✅ Data comes only from index
+
+--------------------------------------
+
+🔥 Q6: How to check index used?
+✅ .explain()
+
+--------------------------------------
+
+🔥 Q7: Drawbacks of indexing?
+
+❌ More storage
+❌ Slower writes
+
+
+======================================
+
+✅ FINAL SUMMARY
+
+✔ Index = Fast query
+✔ Use on frequently queried fields
+✔ Compound index order matters
+✔ Use $match first in aggregation
+✔ Use explain() to verify
+
+======================================

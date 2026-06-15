@@ -1,0 +1,157 @@
+
+
+Last Week 
+	binary json - datatype 
+	update -> whole resource or only particular fields ?
+	mongodb version -> atlas -> MongoDB Version: 8.0.24
+	check its free or expiry date. 	-> free forever upto 500 MB
+
+
+MongoDB Concepts Explained (For eCommerce Project)
+
+1. DATABASE STRUCTURE
+
+	MongoDB structure hierarchy:
+		Cluster → Database → Collection → Document → Fields
+
+	Example:
+		Cluster: Cluster0
+		Database: ecommerceDB
+		Collections: users, products
+
+			Document Example:
+			
+				{
+				  "name": "Shridhar Gadhave",
+				  "email": "shridhar@example.com",
+				  "mobile": "+919876543210",
+				  "age": 32,
+				  "gender": "Male",
+				  "address": {
+					"city": "Pune"
+				  }
+				}
+
+				Fields:
+				name → String
+				age → Number
+				address → Object
+
+----------------------------------------
+
+2. CLUSTER
+
+Cluster = Group of servers managing your database.
+
+In MongoDB Atlas:
+- Fully managed cloud database
+
+Types of Clusters:
+
+1. Single Node (Free Tier)
+	- One server
+	- Used for practice
+
+2. Replica Set
+	- Primary: Handles writes
+	- Secondary: Backup copies
+	- Provides high availability
+
+3. Sharded Cluster
+	- Data split across multiple servers
+	- Used for large-scale applications
+
+
+Analogy:
+	Cluster = Infrastructure
+	Database = Application DB
+	Collection = Tables
+	Document = Rows
+
+----------------------------------------
+
+3. DATA TYPES
+
+MongoDB uses BSON (Binary JSON)
+
+Common Data Types:
+
+	1. String
+	  "name": "Shridhar"
+
+	2. Number
+	  "age": 32
+
+	3. Boolean
+	  "isActive": true
+
+	4. Object
+	  "address": {
+		"city": "Pune"
+	  }
+
+	5. Array
+	  "hobbies": ["reading", "coding"]
+
+	6. Date
+	  "createdAt": ISODate("2025-01-01T10:00:00Z")
+
+	7. ObjectId
+	  "_id": ObjectId("665f8b123abc...")
+
+----------------------------------------
+
+4. SCHEMA
+
+Schema = Structure of documents
+
+MongoDB is schema-less, but schema is required in real applications.
+
+User Schema Example:
+	{
+	  name: String,
+	  email: String,
+	  mobile: String,
+	  age: Number,
+	  gender: String,
+	  address: {
+		city: String,
+		state: String,
+		zipCode: String,
+		country: String
+	  }
+	}
+
+Mongoose Example (Node.js):
+
+	const userSchema = new mongoose.Schema({
+	  name: String,
+	  email: String,
+	  mobile: String,
+	  age: Number,
+	  gender: String,
+	  address: {
+		city: String,
+		state: String,
+		zipCode: String,
+		country: String
+	  }
+	});
+
+
+Why Schema is Important:
+- Data consistency
+- Validation (e.g., age >= 18)
+- Clean queries
+- Required for production systems
+
+----------------------------------------
+
+SUMMARY
+
+	Cluster → Group of DB servers
+	Database → Logical container
+	Collection → Group of documents
+	Document → JSON record
+	Data Types → String, Number, Object, Array, Date, ObjectId
+	Schema → Defines structure (via Mongoose)
