@@ -1,0 +1,715 @@
+=========================================================
+MONGODB SHARDING & REPLICATION
+=========================================================
+
+=========================================================
+WHY MONGODB?
+=========================================================
+
+MongoDB is a NoSQL, document-oriented database designed for:
+
+✅ High scalability
+✅ Flexible schema
+✅ Faster development
+✅ Handling large, unstructured or semi-structured data
+
+Explanation:
+
+MongoDB is preferred when application requirements evolve frequently,
+data structure is dynamic, and horizontal scaling is required.
+
+It stores data as JSON-like documents (BSON) instead of rows and columns.
+
+=========================================================
+WHAT DOES HORIZONTAL SCALING MEAN?
+=========================================================
+
+Horizontal scaling (scale-out) means adding more servers
+(machines/nodes) to handle increased load instead of upgrading a
+single server.
+
+MongoDB is built to support this naturally.
+
+=========================================================
+HORIZONTAL VS VERTICAL SCALING
+=========================================================
+
+---------------------------------------------------------
+VERTICAL SCALING (SCALE-UP)
+---------------------------------------------------------
+
+Increase power of ONE server.
+
+Examples:
+
+✅ Add more RAM
+✅ Add more CPU
+✅ Bigger Disk
+
+Example:
+
+1 Server → 8 GB RAM
+Upgrade → 64 GB RAM
+
+Limitations:
+
+❌ Hardware limit
+❌ Downtime
+❌ Single point of failure
+
+Typical for traditional SQL databases.
+
+---------------------------------------------------------
+HORIZONTAL SCALING (SCALE-OUT)
+---------------------------------------------------------
+
+Add MORE servers.
+
+Example:
+
+1 Server
+→ 2 Servers
+→ 10 Servers
+→ 100 Servers
+
+Benefits:
+
+✅ Virtually unlimited growth
+✅ High availability
+✅ Fault tolerance
+
+MongoDB supports this through Sharding.
+
+=========================================================
+HORIZONTAL SCALING IN MONGODB
+=========================================================
+
+MongoDB achieves horizontal scaling using:
+
+✅ SHARDING
+
+---------------------------------------------------------
+REPLICATION VS SHARDING
+---------------------------------------------------------
+
+Replication
+=
+Copy SAME data to multiple servers
+=
+High Availability + Data Safety
+
+Sharding
+=
+Split DIFFERENT data across multiple servers
+=
+Scalability
+
+Important:
+
+Replication and Sharding solve different problems.
+
+In real-world systems both are used together.
+
+=========================================================
+ECOMMERCE EXAMPLE
+=========================================================
+
+Collection: orders
+
+Records: 100 Million Orders
+
+Traffic:
+
+✅ Heavy Reads
+✅ Heavy Writes
+
+---------------------------------------------------------
+NO REPLICATION + NO SHARDING
+---------------------------------------------------------
+
+Single MongoDB Server
+
+Problems:
+
+❌ Disk may fill
+❌ RAM limit
+❌ CPU bottleneck
+❌ Server failure causes downtime
+
+Not suitable for production.
+
+=========================================================
+PART 1 — REPLICATION
+=========================================================
+
+---------------------------------------------------------
+WHAT IS REPLICATION?
+---------------------------------------------------------
+
+Replication means:
+
+The SAME data is copied to multiple MongoDB servers.
+
+---------------------------------------------------------
+REPLICA SET STRUCTURE
+---------------------------------------------------------
+
+Primary
+
+Secondary
+
+Secondary
+
+All contain the same 100 million records.
+
+---------------------------------------------------------
+HOW REPLICATION WORKS
+---------------------------------------------------------
+
+1. Application writes data
+2. Write reaches Primary
+3. Primary records operation in oplog
+4. Secondaries read oplog
+5. Same operation applied on secondaries
+
+Data synchronization happens automatically.
+
+---------------------------------------------------------
+WHY REPLICATION IS NEEDED?
+---------------------------------------------------------
+
+Example:
+
+Primary crashes at 2 AM.
+
+Without Replication:
+
+❌ Application Down
+❌ Business Loss
+
+With Replication:
+
+✅ Secondary promoted to Primary
+✅ Application keeps running
+
+Benefits:
+
+✅ High Availability
+✅ Data Safety
+✅ Automatic Failover
+
+---------------------------------------------------------
+IMPORTANT INTERVIEW POINT
+---------------------------------------------------------
+
+Replication DOES NOT increase database size limit.
+
+Even with replication:
+
+Server 1 = 100M records
+Server 2 = 100M records
+Server 3 = 100M records
+
+Same data everywhere.
+
+---------------------------------------------------------
+IS REPLICATION AUTOMATIC?
+---------------------------------------------------------
+
+Initial setup:
+
+❌ No
+
+Need to:
+
+✅ Start replica set
+✅ Initialize replica set
+✅ Add members
+
+After setup:
+
+✅ Replication becomes automatic
+
+=========================================================
+PART 2 — SHARDING
+=========================================================
+
+Suppose:
+
+Orders increase from:
+
+100M
+→ 500M
+→ 1B
+
+One replica set cannot handle:
+
+❌ Storage growth
+❌ Throughput growth
+
+This is where replication alone is insufficient.
+
+---------------------------------------------------------
+WHAT IS SHARDING?
+---------------------------------------------------------
+
+Sharding means:
+
+Split data across multiple servers.
+
+Each server stores only PART of the data.
+
+---------------------------------------------------------
+EXAMPLE
+---------------------------------------------------------
+
+Shard 1
+
+Orders 1M – 30M
+
+Shard 2
+
+Orders 30M – 60M
+
+Shard 3
+
+Orders 60M – 100M
+
+Benefits:
+
+✅ Data distributed
+✅ Storage distributed
+✅ Load distributed
+
+=========================================================
+SHARDED CLUSTER ARCHITECTURE
+=========================================================
+
+Client
+  |
+mongos (Router)
+  |
+------------------------------
+| Shard1 | Shard2 | Shard3 |
+------------------------------
+  |
+Config Servers
+
+mongos controls routing.
+
+=========================================================
+IS SHARDING AUTOMATIC?
+=========================================================
+
+Initial setup:
+
+❌ No
+
+Need to:
+
+✅ Enable sharding
+✅ Choose shard key
+✅ Shard collection
+
+After setup:
+
+✅ Auto Split Chunks
+✅ Auto Balance Chunks
+
+=========================================================
+SHARD KEY
+=========================================================
+
+Shard key decides:
+
+✅ Where data is stored
+✅ How data is distributed
+✅ Query routing
+
+Example:
+
+{ userId: "hashed" }
+
+Very important design decision.
+
+=========================================================
+SHARDING + REPLICATION
+=========================================================
+
+Real Production Architecture:
+
+Every shard is itself a Replica Set.
+
+---------------------------------------------------------
+SHARD 1
+---------------------------------------------------------
+
+Primary
+Secondary
+Secondary
+
+---------------------------------------------------------
+SHARD 2
+---------------------------------------------------------
+
+Primary
+Secondary
+Secondary
+
+---------------------------------------------------------
+MEANING
+---------------------------------------------------------
+
+Sharding
+=
+Data Distribution
+
+Replication
+=
+Data Protection
+
+Provides:
+
+✅ Scalability
+✅ Availability
+✅ Fault Tolerance
+
+Production architecture always combines both.
+
+=========================================================
+INSERT FLOW IN SHARDED CLUSTER
+=========================================================
+
+db.orders.insertOne({
+    userId: 101,
+    amount: 5000
+});
+
+Flow:
+
+1. Client sends request
+2. mongos checks shard key
+3. Routes request to target shard
+4. Write goes to shard Primary
+5. Write replicated to shard Secondaries
+
+Benefits:
+
+✅ Fast
+✅ Safe
+✅ Scalable
+
+=========================================================
+REPLICATION VS SHARDING TABLE
+=========================================================
+
+Purpose
+
+Replication:
+High Availability
+
+Sharding:
+Scalability
+
+---------------------------------------------------------
+
+Data
+
+Replication:
+Same Data Copied
+
+Sharding:
+Different Data Split
+
+---------------------------------------------------------
+
+Solves
+
+Replication:
+Failures
+
+Sharding:
+Large Data + Heavy Traffic
+
+---------------------------------------------------------
+
+Writes
+
+Replication:
+Primary Only
+
+Sharding:
+Distributed
+
+---------------------------------------------------------
+
+Usage
+
+Replication:
+Can be used alone
+
+Sharding:
+Typically combined with Replication
+
+=========================================================
+WHEN DO THEY HAPPEN?
+=========================================================
+
+Replication:
+
+✅ Configure Replica Set
+✅ MongoDB syncs automatically
+✅ Elections occur on failure
+
+---------------------------------------------------------
+
+Sharding:
+
+✅ Data becomes too large
+✅ Traffic becomes too high
+✅ Collection explicitly sharded
+
+=========================================================
+FINAL SUMMARY
+=========================================================
+
+Replication:
+
+Copies the same data across multiple nodes for:
+
+✅ High Availability
+✅ Failover
+✅ Data Safety
+
+---------------------------------------------------------
+
+Sharding:
+
+Splits data across multiple servers for:
+
+✅ Horizontal Scaling
+✅ Large Data Volumes
+✅ High Throughput
+
+---------------------------------------------------------
+
+Production Architecture:
+
+Shard
+   ↓
+Replica Set
+
+All production MongoDB systems use:
+
+✅ Replication
++
+✅ Sharding
+
+for scalability and fault tolerance.
+
+=========================================================
+DEEP DIVE INTO SHARDING
+=========================================================
+
+Sharding is MongoDB's strategy for horizontal scaling
+by splitting data across multiple shards.
+
+Each shard stores only a subset of data.
+
+=========================================================
+WHY MONGODB IS BETTER AT HORIZONTAL SCALING
+=========================================================
+
+Traditional SQL:
+
+✅ Strong joins
+❌ Difficult distribution
+❌ Complex manual sharding
+
+MongoDB:
+
+✅ Document-based
+✅ Fewer joins
+✅ Built for distribution
+
+Interview One-Liner:
+
+Horizontal scaling in MongoDB means distributing data
+across multiple servers using sharding, allowing the
+system to handle massive traffic and data growth
+without relying on a single powerful machine.
+
+=========================================================
+COMPONENTS OF SHARDED CLUSTER
+=========================================================
+
+1. SHARDS
+
+Store actual data.
+
+Each shard is a Replica Set.
+
+Benefits:
+
+✅ High Availability
+✅ Fault Tolerance
+
+---------------------------------------------------------
+
+2. CONFIG SERVERS
+
+Store metadata.
+
+Examples:
+
+✅ Chunk ownership
+✅ Shard key information
+✅ Cluster configuration
+
+Minimum:
+
+3 Config Servers
+
+---------------------------------------------------------
+
+3. MONGOS
+
+Query Router.
+
+Responsibilities:
+
+✅ Routes requests
+✅ Talks to shards
+✅ Uses Config metadata
+
+Clients communicate only with mongos.
+
+=========================================================
+CHUNKS
+=========================================================
+
+MongoDB divides data into chunks.
+
+Default Chunk Size:
+
+128 MB
+
+Example:
+
+Shard Key:
+
+{ userId: 1 }
+
+Chunk C1:
+
+1–1000
+
+Shard 1
+
+Chunk C2:
+
+1001–2000
+
+Shard 2
+
+Chunk C3:
+
+2001–3000
+
+Shard 3
+
+=========================================================
+BALANCER
+=========================================================
+
+Background process.
+
+Responsibilities:
+
+✅ Moves chunks
+✅ Balances data
+
+Benefits:
+
+✅ Automatic
+✅ Zero Downtime
+
+=========================================================
+TYPES OF SHARDING
+=========================================================
+
+1. RANGE SHARDING
+
+Data distributed by ranges.
+
+Example:
+
+1–1000 → Shard 1
+1001–2000 → Shard 2
+
+---------------------------------------------------------
+
+2. HASHED SHARDING
+
+MongoDB hashes values.
+
+Example:
+
+sh.shardCollection(
+  "ecommerce.orders",
+  { userId: "hashed" }
+)
+
+Interview Tip:
+
+Use hashed sharding for write-heavy workloads
+requiring even distribution.
+
+=========================================================
+QUERY ROUTING
+=========================================================
+
+---------------------------------------------------------
+QUERY WITH SHARD KEY
+---------------------------------------------------------
+
+db.orders.find({
+    userId: 101
+})
+
+mongos routes to one shard.
+
+✅ Fast
+
+---------------------------------------------------------
+QUERY WITHOUT SHARD KEY
+---------------------------------------------------------
+
+db.orders.find({
+    status: "DELIVERED"
+})
+
+mongos sends query to all shards.
+
+❌ Scatter Gather
+❌ Slower
+
+=========================================================
+WRITES IN SHARDED MONGODB
+=========================================================
+
+Insert Flow:
+
+Client
+  ↓
+mongos
+  ↓
+Determine shard using shard key
+  ↓
+Write to Primary
+  ↓
+Replicate to Secondaries
+
+=========================================================
+END OF NOTES
+=========================================================
